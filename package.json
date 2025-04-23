@@ -1,0 +1,75 @@
+{
+  "name": "xdropia-browser",
+  "version": "1.0.0",
+  "description": "XDropia Browser - Secure credential management browser",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run dev:webpack\" \"npm run dev:electron\"",
+    "dev:webpack": "webpack serve --config webpack.dev.js",
+    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "build": "webpack --config webpack.prod.js && electron-builder",
+    "build:win": "webpack --config webpack.prod.js && electron-builder --win",
+    "build:mac": "webpack --config webpack.prod.js && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.xdropia.browser",
+    "productName": "XDropia Browser",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "keywords": [
+    "electron",
+    "react",
+    "browser",
+    "credentials",
+    "xdropia"
+  ],
+  "author": "XDropia",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/react-router-dom": "^5.3.3",
+    "autoprefixer": "^10.4.21",
+    "better-sqlite3": "^11.9.1",
+    "concurrently": "^8.2.2",
+    "css-loader": "^7.1.2",
+    "electron": "^35.2.1",
+    "electron-builder": "^26.0.12",
+    "html-webpack-plugin": "^5.6.3",
+    "node-fetch": "^3.3.2",
+    "postcss": "^8.5.3",
+    "postcss-loader": "^8.1.1",
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^4.1.4",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "wait-on": "^7.2.0",
+    "webpack": "^5.99.6",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1",
+    "webpack-merge": "^5.10.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "electron-store": "^8.1.0",
+    "lucide-react": "^0.323.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.5.1"
+  }
+}
