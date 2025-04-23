@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, RefreshCw, Users, BarChart } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 interface Credential {
   id: string;
@@ -19,43 +21,13 @@ interface UserStat {
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
-  const [credentials, setCredentials] = useState<Credential[]>([
-    {
-      id: '1',
-      service: 'Minea',
-      email: 'cuenta1@example.com',
-      password: 'password123',
-      status: 'active',
-      plan: 'premium',
-      expiresAt: '2025-12-31'
-    },
-    {
-      id: '2',
-      service: 'Adspy',
-      email: 'cuenta2@example.com',
-      password: 'password456',
-      status: 'active',
-      plan: 'team',
-      expiresAt: '2025-10-15'
-    },
-    {
-      id: '3',
-      service: 'Midjourney',
-      email: 'cuenta3@example.com',
-      password: 'password789',
-      status: 'inactive',
-      plan: 'free',
-      expiresAt: '2025-08-22'
-    }
-  ]);
-
-  const [stats, setStats] = useState<UserStat[]>([
-    { plan: 'Free', count: 120 },
-    { plan: 'Premium', count: 45 },
-    { plan: 'Team', count: 15 }
-  ]);
-
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [stats, setStats] = useState<UserStat[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [activeTab, setActiveTab] = useState<'credentials' | 'stats'>('credentials');
   const [showAddCredential, setShowAddCredential] = useState(false);
   const [newCredential, setNewCredential] = useState<Partial<Credential>>({
@@ -67,52 +39,113 @@ const AdminPage: React.FC = () => {
     expiresAt: ''
   });
 
-  const handleLogout = () => {
-    navigate('/login');
+  useEffect(() => {
+    if (user && !user.isAdmin) {
+      navigate('/dashboard');
+      return;
+    }
+    
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        const credentialsData = await api.getAllCredentials();
+        setCredentials(credentialsData);
+        
+        const statsData = await api.getUserStats();
+        setStats(statsData);
+        
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+        setError('Error al cargar los datos. Por favor, intenta de nuevo.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user, navigate]);
+
+  const handleLogout = async () => {
+    await logout();
   };
 
-  const handleAddCredential = () => {
+  const handleAddCredential = async () => {
     if (newCredential.service && newCredential.email && newCredential.password && newCredential.expiresAt) {
-      const id = Math.random().toString(36).substring(2, 9);
-      setCredentials([
-        ...credentials,
-        {
-          id,
+      try {
+        setLoading(true);
+        
+        const newCredentialData = {
           service: newCredential.service,
           email: newCredential.email,
           password: newCredential.password,
           status: newCredential.status as 'active' | 'inactive',
           plan: newCredential.plan as 'free' | 'premium' | 'team',
           expiresAt: newCredential.expiresAt
-        }
-      ]);
-      setShowAddCredential(false);
-      setNewCredential({
-        service: '',
-        email: '',
-        password: '',
-        status: 'active',
-        plan: 'premium',
-        expiresAt: ''
-      });
+        };
+        
+        const addedCredential = await api.addCredential(newCredentialData);
+        
+        setCredentials([...credentials, addedCredential]);
+        setShowAddCredential(false);
+        setNewCredential({
+          service: '',
+          email: '',
+          password: '',
+          status: 'active',
+          plan: 'premium',
+          expiresAt: ''
+        });
+      } catch (error) {
+        console.error('Error adding credential:', error);
+        setError('Error al añadir la credencial. Por favor, intenta de nuevo.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const toggleCredentialStatus = (id: string) => {
-    setCredentials(
-      credentials.map(cred => 
-        cred.id === id 
-          ? { ...cred, status: cred.status === 'active' ? 'inactive' : 'active' } 
-          : cred
-      )
-    );
+  const toggleCredentialStatus = async (id: string) => {
+    try {
+      setLoading(true);
+      
+      const credential = credentials.find(cred => cred.id === id);
+      if (!credential) return;
+      
+      const newStatus = credential.status === 'active' ? 'inactive' : 'active';
+      await api.updateCredentialStatus(id, newStatus);
+      
+      setCredentials(
+        credentials.map(cred => 
+          cred.id === id 
+            ? { ...cred, status: newStatus } 
+            : cred
+        )
+      );
+    } catch (error) {
+      console.error('Error updating credential status:', error);
+      setError('Error al actualizar el estado de la credencial. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!user || !user.isAdmin) {
+    return null; // AuthContext will handle redirection
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-800">XDropia Browser - Panel de Administración</h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">XDropia Browser - Panel de Administración</h1>
+            {user && (
+              <p className="text-sm text-gray-500">
+                Administrador: <span className="font-medium">{user.name}</span>
+              </p>
+            )}
+          </div>
           <button 
             onClick={handleLogout}
             className="flex items-center text-gray-600 hover:text-gray-900"
@@ -124,6 +157,12 @@ const AdminPage: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+        
         <div className="flex border-b border-gray-200 mb-6">
           <button
             className={`py-2 px-4 font-medium ${
@@ -132,6 +171,7 @@ const AdminPage: React.FC = () => {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
             onClick={() => setActiveTab('credentials')}
+            disabled={loading}
           >
             <div className="flex items-center">
               <RefreshCw size={18} className="mr-2" />
@@ -145,6 +185,7 @@ const AdminPage: React.FC = () => {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
             onClick={() => setActiveTab('stats')}
+            disabled={loading}
           >
             <div className="flex items-center">
               <BarChart size={18} className="mr-2" />
@@ -152,6 +193,12 @@ const AdminPage: React.FC = () => {
             </div>
           </button>
         </div>
+        
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
 
         {activeTab === 'credentials' && (
           <div>

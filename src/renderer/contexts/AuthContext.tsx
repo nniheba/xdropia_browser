@@ -9,6 +9,7 @@ interface User {
   plan: 'free' | 'premium' | 'team';
   maxSessions: number;
   activeSessions: number;
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
@@ -64,7 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.email,
         plan: userData.meta?.plan || 'free',
         maxSessions: userData.meta?.plan === 'team' ? 5 : 1,
-        activeSessions: sessionsData.active_sessions || 0
+        activeSessions: sessionsData.active_sessions || 0,
+        isAdmin: userData.meta?.role === 'administrator' || false
       };
       
       if (user.plan !== 'team' && user.activeSessions > user.maxSessions) {
@@ -98,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.email,
         plan: userData.meta?.plan || 'free',
         maxSessions: userData.meta?.plan === 'team' ? 5 : 1,
-        activeSessions: sessionsData.active_sessions || 0
+        activeSessions: sessionsData.active_sessions || 0,
+        isAdmin: userData.meta?.role === 'administrator' || false
       };
       
       if (user.plan !== 'team' && user.activeSessions >= user.maxSessions) {

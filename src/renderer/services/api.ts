@@ -216,6 +216,104 @@ export const api = {
       localStorage.removeItem('token');
       localStorage.removeItem('session_id');
     }
+  },
+  
+  getAllCredentials: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.get(
+        `${ENDPOINTS.CREDENTIALS}/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Get all credentials error:', error);
+      throw error;
+    }
+  },
+  
+  getUserStats: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.get(
+        `${API_BASE_URL}/xdropia/v1/stats/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      throw error;
+    }
+  },
+  
+  addCredential: async (credentialData: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.post(
+        ENDPOINTS.CREDENTIALS,
+        credentialData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Add credential error:', error);
+      throw error;
+    }
+  },
+  
+  updateCredentialStatus: async (id: string, status: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.patch(
+        `${ENDPOINTS.CREDENTIALS}/${id}`,
+        { status },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Update credential status error:', error);
+      throw error;
+    }
   }
 };
 
