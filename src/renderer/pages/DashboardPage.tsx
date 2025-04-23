@@ -346,12 +346,15 @@ const DashboardPage: React.FC = () => {
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-semibold text-gray-800">{credential.name}</h3>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
+                    <span className={`px-3 py-1.5 text-sm font-medium rounded-full flex items-center ${
                       credential.status === 'active' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {credential.status === 'active' ? 'Activo' : 'Inactivo'}
+                      <span className={`w-2 h-2 rounded-full mr-1.5 ${
+                        credential.status === 'active' ? 'bg-green-600' : 'bg-red-600'
+                      }`}></span>
+                      {credential.status === 'active' ? 'Disponible' : 'No disponible'}
                     </span>
                   </div>
                   
