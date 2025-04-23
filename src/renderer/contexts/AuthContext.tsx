@@ -69,8 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: userData.meta?.role === 'administrator' || false
       };
       
-      if (user.plan !== 'team' && user.activeSessions > user.maxSessions) {
-        setError('Has excedido el número máximo de sesiones activas');
+      if (user.activeSessions >= user.maxSessions) {
+        if (user.plan === 'team') {
+          setError(`Has excedido el límite de ${user.maxSessions} sesiones activas para tu plan de equipo`);
+        } else {
+          setError('Solo puedes tener una sesión activa con tu plan actual');
+        }
         await api.logout();
         return false;
       }
@@ -104,8 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: userData.meta?.role === 'administrator' || false
       };
       
-      if (user.plan !== 'team' && user.activeSessions >= user.maxSessions) {
-        setError('Has excedido el número máximo de sesiones activas');
+      if (user.activeSessions >= user.maxSessions) {
+        if (user.plan === 'team') {
+          setError(`Has excedido el límite de ${user.maxSessions} sesiones activas para tu plan de equipo`);
+        } else {
+          setError('Solo puedes tener una sesión activa con tu plan actual');
+        }
         await api.logout();
         return;
       }

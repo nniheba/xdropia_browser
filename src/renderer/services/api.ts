@@ -339,6 +339,54 @@ export const api = {
       console.error('Update credential expiration error:', error);
       throw error;
     }
+  },
+  
+  getAllActiveSessions: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.get(
+        `${ENDPOINTS.SESSIONS}/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Get all active sessions error:', error);
+      throw error;
+    }
+  },
+  
+  endSpecificSession: async (sessionId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.delete(
+        `${ENDPOINTS.SESSIONS}/${sessionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('End specific session error:', error);
+      throw error;
+    }
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Info, ExternalLink, Lock } from 'lucide-react';
+import { LogOut, Info, ExternalLink, Lock, Users, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -29,6 +29,10 @@ const DashboardPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [passwordChangeMessage, setPasswordChangeMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  
+  const [showSessionManager, setShowSessionManager] = useState<boolean>(false);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
+  const [sessionLoading, setSessionLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const preventInspection = async () => {
@@ -94,6 +98,38 @@ const DashboardPage: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
+  };
+  
+  const fetchActiveSessions = async () => {
+    if (!user) return;
+    
+    setSessionLoading(true);
+    try {
+      const sessionsData = await api.getAllActiveSessions();
+      setActiveSessions(sessionsData.sessions || []);
+    } catch (error) {
+      console.error('Error fetching active sessions:', error);
+    } finally {
+      setSessionLoading(false);
+    }
+  };
+  
+  const handleEndSession = async (sessionId: string) => {
+    if (!user) return;
+    
+    setSessionLoading(true);
+    try {
+      await api.endSpecificSession(sessionId);
+      await fetchActiveSessions();
+      
+      if (user) {
+        user.activeSessions = Math.max(0, user.activeSessions - 1);
+      }
+    } catch (error) {
+      console.error('Error ending session:', error);
+    } finally {
+      setSessionLoading(false);
+    }
   };
   
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -272,9 +308,31 @@ const DashboardPage: React.FC = () => {
           <div>
             <h1 className="text-xl font-bold text-gray-800">XDropia Browser</h1>
             {user && (
-              <p className="text-sm text-gray-500">
-                Plan: <span className="font-medium">{user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}</span>
-              </p>
+              <div>
+                <p className="text-sm text-gray-500">
+                  Plan: <span className="font-medium">{user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}</span>
+                </p>
+                <div className="flex items-center">
+                  <p className="text-sm text-gray-500">
+                    Sesiones: <span className="font-medium">{user.activeSessions} de {user.maxSessions}</span>
+                    {user.plan === 'team' && (
+                      <span className="ml-1 text-xs text-blue-600">(Plan de equipo)</span>
+                    )}
+                  </p>
+                  {user.plan === 'team' && (
+                    <button 
+                      onClick={() => {
+                        fetchActiveSessions();
+                        setShowSessionManager(true);
+                      }}
+                      className="ml-2 text-blue-600 hover:text-blue-800 text-xs flex items-center"
+                    >
+                      <Users size={14} className="mr-1" />
+                      Administrar
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
           <button 
@@ -481,6 +539,72 @@ const DashboardPage: React.FC = () => {
           <Lock size={20} />
         </button>
       </div>
+
+      {/* Session Manager Modal */}
+      {showSessionManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Administrar Sesiones</h3>
+              <button
+                onClick={() => setShowSessionManager(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">
+                Sesiones activas: <span className="font-medium">{user?.activeSessions || 0}</span> de <span className="font-medium">{user?.maxSessions || 0}</span>
+              </p>
+            </div>
+            
+            {sessionLoading ? (
+              <div className="py-4 text-center">
+                <p className="text-gray-500">Cargando sesiones...</p>
+              </div>
+            ) : (
+              <div className="max-h-60 overflow-y-auto">
+                {activeSessions.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No hay sesiones activas</p>
+                ) : (
+                  <ul className="divide-y divide-gray-200">
+                    {activeSessions.map((session) => (
+                      <li key={session.id} className="py-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{session.device_name || 'Dispositivo desconocido'}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(session.created_at).toLocaleString('es-ES')}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleEndSession(session.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="Cerrar sesión"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            
+            <div className="mt-6">
+              <button
+                onClick={() => setShowSessionManager(false)}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
