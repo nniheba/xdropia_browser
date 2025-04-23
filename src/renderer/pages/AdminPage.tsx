@@ -30,6 +30,9 @@ const AdminPage: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'credentials' | 'stats'>('credentials');
   const [showAddCredential, setShowAddCredential] = useState(false);
+  const [showRenewCredential, setShowRenewCredential] = useState(false);
+  const [selectedCredentialId, setSelectedCredentialId] = useState<string>('');
+  const [newExpirationDate, setNewExpirationDate] = useState<string>('');
   const [newCredential, setNewCredential] = useState<Partial<Credential>>({
     service: '',
     email: '',
@@ -125,6 +128,40 @@ const AdminPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating credential status:', error);
       setError('Error al actualizar el estado de la credencial. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleRenewCredential = (id: string) => {
+    const credential = credentials.find(cred => cred.id === id);
+    if (!credential) return;
+    
+    setSelectedCredentialId(id);
+    setNewExpirationDate('');
+    setShowRenewCredential(true);
+  };
+  
+  const submitRenewCredential = async () => {
+    if (!selectedCredentialId || !newExpirationDate) return;
+    
+    try {
+      setLoading(true);
+      
+      await api.updateCredentialExpiration(selectedCredentialId, newExpirationDate);
+      
+      setCredentials(
+        credentials.map(cred => 
+          cred.id === selectedCredentialId 
+            ? { ...cred, expiresAt: newExpirationDate } 
+            : cred
+        )
+      );
+      
+      setShowRenewCredential(false);
+    } catch (error) {
+      console.error('Error renewing credential:', error);
+      setError('Error al renovar la credencial. Por favor, intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -365,21 +402,71 @@ const AdminPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => toggleCredentialStatus(credential.id)}
-                          className={`mr-2 px-3 py-1 rounded-md ${
-                            credential.status === 'active'
-                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                              : 'bg-green-100 text-green-800 hover:bg-green-200'
-                          }`}
-                        >
-                          {credential.status === 'active' ? 'Desactivar' : 'Activar'}
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => toggleCredentialStatus(credential.id)}
+                            className={`px-3 py-1 rounded-md ${
+                              credential.status === 'active'
+                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            }`}
+                          >
+                            {credential.status === 'active' ? 'Desactivar' : 'Activar'}
+                          </button>
+                          <button
+                            onClick={() => handleRenewCredential(credential.id)}
+                            className="px-3 py-1 rounded-md bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          >
+                            Renovar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+        
+        {/* Renewal Modal */}
+        {showRenewCredential && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Renovar Credencial</h3>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  Nueva Fecha de Expiración
+                </label>
+                <input
+                  type="date"
+                  value={newExpirationDate}
+                  onChange={(e) => setNewExpirationDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowRenewCredential(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={submitRenewCredential}
+                  disabled={!newExpirationDate}
+                  className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    newExpirationDate
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Guardar
+                </button>
+              </div>
             </div>
           </div>
         )}

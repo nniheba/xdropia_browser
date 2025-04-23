@@ -314,6 +314,31 @@ export const api = {
       console.error('Update credential status error:', error);
       throw error;
     }
+  },
+  
+  updateCredentialExpiration: async (id: string, expiresAt: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+      
+      const response = await axios.patch(
+        `${ENDPOINTS.CREDENTIALS}/${id}`,
+        { expires_at: expiresAt },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Update credential expiration error:', error);
+      throw error;
+    }
   }
 };
 
