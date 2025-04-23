@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XDropia Browser - Dashboard Mockup</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #3b82f6;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .user-info span {
+      margin-right: 20px;
+    }
+    .logout-btn {
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .categories {
+      margin-bottom: 20px;
+    }
+    .category-btn {
+      background-color: white;
+      border: 1px solid #ddd;
+      padding: 8px 16px;
+      margin-right: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .category-btn.active {
+      background-color: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .card .category {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .card .status {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-dot.available {
+      background-color: #10b981;
+    }
+    .status-dot.unavailable {
+      background-color: #ef4444;
+    }
+    .card-btn {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .card-btn:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>XDropia Browser</h1>
+    <div class="user-info">
+      <span>Usuario: Premium</span>
+      <span>Sesiones: 1/1</span>
+      <button class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </div>
+  
+  <div class="container">
+    <div class="categories">
+      <button class="category-btn active">Todos</button>
+      <button class="category-btn">Diseño</button>
+      <button class="category-btn">Marketing</button>
+      <button class="category-btn">AI</button>
+    </div>
+    
+    <div class="cards-container">
+      <div class="card">
+        <h3>Canva</h3>
+        <div class="category">Diseño</div>
+        <div class="status">
+          <div class="status-dot available"></div>
+          <span>Disponible</span>
+        </div>
+        <button class="card-btn">Abrir</button>
+      </div>
+      
+      <div class="card">
+        <h3>ADSParo</h3>
+        <div class="category">Marketing</div>
+        <div class="status">
+          <div class="status-dot available"></div>
+          <span>Disponible</span>
+        </div>
+        <button class="card-btn">Abrir</button>
+      </div>
+      
+      <div class="card">
+        <h3>Minea</h3>
+        <div class="category">AI</div>
+        <div class="status">
+          <div class="status-dot unavailable"></div>
+          <span>No disponible</span>
+        </div>
+        <button class="card-btn">Abrir</button>
+      </div>
+      
+      <div class="card">
+        <h3>ChatGPT</h3>
+        <div class="category">AI</div>
+        <div class="status">
+          <div class="status-dot available"></div>
+          <span>Disponible</span>
+        </div>
+        <button class="card-btn">Abrir</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

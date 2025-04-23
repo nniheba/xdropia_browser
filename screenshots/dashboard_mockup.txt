@@ -1,0 +1,28 @@
+# XDropia Browser - Dashboard Page Mockup
+
++------------------------------------------+
+|                                          |
+|  XDropia Browser       Usuario: Premium  |
+|                        Sesiones: 1/1     |
+|  [Cerrar Sesión]                         |
+|                                          |
++------------------------------------------+
+|                                          |
+|  Categorías:                             |
+|  [Todos] [Diseño] [Marketing] [AI]       |
+|                                          |
+|  +-------------+  +-------------+        |
+|  | Canva       |  | ADSParo     |        |
+|  | Diseño      |  | Marketing   |        |
+|  | Disponible  |  | Disponible  |        |
+|  | [Abrir]     |  | [Abrir]     |        |
+|  +-------------+  +-------------+        |
+|                                          |
+|  +-------------+  +-------------+        |
+|  | Minea       |  | ChatGPT     |        |
+|  | AI          |  | AI          |        |
+|  | No disponible| | Disponible  |        |
+|  | [Abrir]     |  | [Abrir]     |        |
+|  +-------------+  +-------------+        |
+|                                          |
++------------------------------------------+
