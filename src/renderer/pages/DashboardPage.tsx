@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Info, ExternalLink } from 'lucide-react';
+import { LogOut, Info, ExternalLink, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -23,13 +23,30 @@ const DashboardPage: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<string[]>([]);
+  
+  const [showPasswordChange, setShowPasswordChange] = useState<boolean>(false);
+  const [oldPassword, setOldPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
+    const preventInspection = async () => {
+      if (window.api) {
+        try {
+          await window.api.preventInspection();
+        } catch (error) {
+          console.error('Error preventing inspection:', error);
+        }
+      }
+    };
+    
     const fetchCredentials = async () => {
       try {
         setLoading(true);
         const data = await api.getCredentials();
         
+        // Format credentials
         const formattedCredentials = data.map((cred: any) => ({
           id: cred.id,
           name: cred.service,
@@ -46,12 +63,21 @@ const DashboardPage: React.FC = () => {
           return planHierarchy[userPlan] >= planHierarchy[cred.planRequired];
         });
         
+        let securedCredentials = filteredCredentials;
+        if (window.api) {
+          try {
+            securedCredentials = await window.api.secureCredentials(filteredCredentials);
+          } catch (error) {
+            console.error('Error securing credentials:', error);
+          }
+        }
+        
         const uniqueCategories = Array.from(
-          new Set(filteredCredentials.map((cred: CredentialCard) => cred.category))
+          new Set(securedCredentials.map((cred: CredentialCard) => cred.category))
         ) as string[];
         
         setCategories(['all', ...uniqueCategories]);
-        setCredentials(filteredCredentials);
+        setCredentials(securedCredentials);
       } catch (error) {
         console.error('Error fetching credentials:', error);
         setError('Error al cargar las credenciales. Por favor, intenta de nuevo.');
@@ -61,12 +87,67 @@ const DashboardPage: React.FC = () => {
     };
 
     if (user) {
+      preventInspection();
       fetchCredentials();
     }
   }, [user]);
 
   const handleLogout = async () => {
     await logout();
+  };
+  
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordChangeMessage(null);
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeMessage({
+        type: 'error',
+        text: 'Las contraseñas nuevas no coinciden'
+      });
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setPasswordChangeMessage({
+        type: 'error',
+        text: 'La contraseña debe tener al menos 8 caracteres'
+      });
+      return;
+    }
+    
+    try {
+      if (window.api) {
+        const result = await window.api.changePassword(oldPassword, newPassword);
+        
+        if (result.success) {
+          setPasswordChangeMessage({
+            type: 'success',
+            text: result.message
+          });
+          
+          setOldPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          
+          setTimeout(() => {
+            setShowPasswordChange(false);
+            setPasswordChangeMessage(null);
+          }, 2000);
+        } else {
+          setPasswordChangeMessage({
+            type: 'error',
+            text: result.message
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordChangeMessage({
+        type: 'error',
+        text: 'Error al cambiar la contraseña. Por favor, intenta de nuevo.'
+      });
+    }
   };
 
   const openTool = async (id: string) => {
@@ -80,10 +161,19 @@ const DashboardPage: React.FC = () => {
         return;
       }
       
+      let secureCredential = credential;
+      if (window.api) {
+        try {
+          secureCredential = await window.api.secureCredentials(credential);
+        } catch (error) {
+          console.error('Error securing credential:', error);
+        }
+      }
+      
       toolWindow.document.write(`
         <html>
           <head>
-            <title>Conectando a ${credential.service}</title>
+            <title>Conectando a ${secureCredential.service}</title>
             <style>
               body {
                 font-family: Arial, sans-serif;
@@ -116,19 +206,50 @@ const DashboardPage: React.FC = () => {
                 display: flex;
                 align-items: center;
               }
+              .secure-badge {
+                display: inline-flex;
+                align-items: center;
+                background-color: #e6f7ff;
+                color: #0066cc;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-top: 10px;
+              }
+              .secure-badge svg {
+                margin-right: 4px;
+              }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="loader"></div>
               <div>
-                <h2>Conectando a ${credential.service}</h2>
+                <h2>Conectando a ${secureCredential.service}</h2>
                 <p>Por favor espera mientras te conectamos...</p>
+                <div class="secure-badge">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  Conexión segura
+                </div>
               </div>
             </div>
             <script>
+              document.addEventListener('contextmenu', event => event.preventDefault());
+              
+              document.addEventListener('keydown', function(e) {
+                if (
+                  e.keyCode === 123 || 
+                  (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))
+                ) {
+                  e.preventDefault();
+                }
+              });
+              
               setTimeout(() => {
-                window.location.href = "${credential.url || 'https://example.com'}";
+                window.location.href = "${secureCredential.url || 'https://example.com'}";
               }, 2000);
             </script>
           </body>
@@ -267,6 +388,96 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
       </main>
+      
+      {/* Password Change Modal */}
+      {showPasswordChange && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Cambiar Contraseña</h3>
+            
+            {passwordChangeMessage && (
+              <div className={`mb-4 p-3 rounded-md ${
+                passwordChangeMessage.type === 'success' 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {passwordChangeMessage.text}
+              </div>
+            )}
+            
+            <form onSubmit={handlePasswordChange}>
+              <div className="mb-4">
+                <label htmlFor="oldPassword" className="block text-gray-700 text-sm font-medium mb-2">
+                  Contraseña Actual
+                </label>
+                <input
+                  id="oldPassword"
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="newPassword" className="block text-gray-700 text-sm font-medium mb-2">
+                  Nueva Contraseña
+                </label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="confirmPassword" className="block text-gray-700 text-sm font-medium mb-2">
+                  Confirmar Nueva Contraseña
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordChange(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* User Settings Button */}
+      <div className="fixed bottom-6 right-6">
+        <button
+          onClick={() => setShowPasswordChange(true)}
+          className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          title="Cambiar Contraseña"
+        >
+          <Lock size={20} />
+        </button>
+      </div>
     </div>
   );
 };
