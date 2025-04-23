@@ -16,7 +16,8 @@
     "appId": "com.xdropia.browser",
     "productName": "XDropia Browser",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -24,10 +25,41 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
-      "target": "dmg"
+      "target": ["dmg", "zip"],
+      "icon": "build/icons/icon.png",
+      "darkModeSupport": true,
+      "hardenedRuntime": true
     },
     "win": {
-      "target": "nsis"
+      "target": ["nsis", "portable"],
+      "icon": "build/icons/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "XDropia Browser",
+      "installerLanguages": ["es-ES"],
+      "language": "1034"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     }
   },
   "keywords": [
