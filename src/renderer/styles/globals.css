@@ -12,15 +12,3 @@ body {
   background: rgb(var(--background-rgb));
   font-family: 'Inter', sans-serif;
 }
-
-@layer base {
-  h1 {
-    @apply text-2xl font-bold;
-  }
-  h2 {
-    @apply text-xl font-semibold;
-  }
-  h3 {
-    @apply text-lg font-medium;
-  }
-}
